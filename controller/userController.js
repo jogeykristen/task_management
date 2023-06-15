@@ -54,18 +54,29 @@ module.exports.deleteTask = async(req,res)=>{
         const {id} = req.params;
         console.log("id =",id)
         //const task = await Task.query('Delete from public."Tasks" Where id = $1',[id]);
-        const task = Task.destroy({
+        const task =await Task.destroy({
             where: {
               id: id
             }
           })
-        console.log("task =",task)
         if(task){
             return res.status(201).json({message:"Deleted successfully"})
         }
         return res.status(400).json({message:"no tasks found with that id"})
     }catch(error){
         return res.status(500).json({message:"Server error"});
+    }
+}
+
+module.exports.getAllTasks = async(req,res)=>{
+    try{
+        const task = await Task.findAll();
+        if(task){
+            return res.status(201).json({task})
+        }
+        return res.status(404).json({message:"No tasks"})
+    }catch(error){
+        return res.status(500).json({message:"Server Error"})
     }
 }
 
