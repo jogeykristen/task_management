@@ -1,0 +1,16 @@
+{
+  "name": "task_management_system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "nodemon server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mysql2": "^3.3.5",
+    "sequelize": "^6.32.0"
+  }
+}
