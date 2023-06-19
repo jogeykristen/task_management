@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('./config/database');
-const userRoutes = require('./routes/taskRoute');
+const taskRoutes = require('./routes/taskRoute');
+const userRoute  = require('./routes/userRoute')
 
 const app = express();
 
@@ -8,6 +9,7 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use('/tasks', userRoutes);
+app.use('/tasks', taskRoutes);
+app.use('/users', userRoute);
 
 module.exports = app;

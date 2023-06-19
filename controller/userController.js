@@ -1,83 +1,66 @@
-const Task = require('../models/task');
+const sequelize = require('../config/database');
+const bcrypt = require('bcrypt');
 
-module.exports.createTask = async(req,res)=>{
+
+module.exports.createUser = async(req,res)=>{
     try{
-        const {title,description,dueDate,progress,priority} =req.body
+        console.log("hi")
+        const{name,email,phonenumber,role, password}=req.body;
+        console.log("email = ",req.body.email);
+        var emailFormat = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        regex = /^\d{10}$/;
+        if(emailFormat.test(req.body.email)){
+            if(regex.test(req.body.phonenumber)){
+                const check = await sequelize.query(`Select * from public."User" Where email = :email`,{
+                    replacements:{email},
+                    type:sequelize.QueryTypes.SELECT,  
+                })
+                if(check.length !==0){
+                    return res.status(401).json({message:"email already exists"})
+                }
+                const salt = await bcrypt.genSalt(10);
 
-        const dueDateObj = new Date(dueDate);
-        //console.log("due date =",dueDateObj)
+                // Hash the password using the generated salt
+                const hashedPassword = await bcrypt.hash(password, salt);
+                const query = `INSERT INTO public."User"(name, email, phonenumber, role,password) VALUES (:name, :email, :phonenumber, :role, :hashedPassword) RETURNING *`;
 
-        const currentDate = new Date();
-
-        if (dueDateObj >= currentDate) {
-            // Create a new task
-            const task = await Task.create({
-              title,
-              description,
-              dueDate,
-              progress,
-              priority,
+                const [user] = await sequelize.query(query, {
+        
+                replacements:{name,email,phonenumber,role,hashedPassword},//replacements is an array containing the actual values that will replace the placeholders in the query. The values are taken from the variables
+                type:sequelize.QueryTypes.INSERT, 
             });
-      
-            res.status(201).json({ task });//The json method in Express is used to send a JSON response to the client. It automatically sets the Content-Type header to application/json and converts the provided JavaScript object to a JSON string.
-          } else {
-            // Return an error response if the due date is in the past
-            res.status(400).json({ error: 'Due date must be greater than or equal to the current date' });
-          }
-    }catch(error){
-        return res.status(500).json({message:"server error"})
-    }
-};
-
-module.exports.updateTask =async(req,res)=>{
-    try{
-        const{id} = req.params;
-        const{description,progress} = req.body;
-
-        const task = await Task.findByPk(id);
-
-        if(!task){
-            return res.status(404).json({message:"No tasks found"})
-        }
-        task.description = description;
-        task.progress = progress
-
-        await task.save()
-        res.status(200).json({ task });
-    }catch(error){
-        return res.status(500).json({message:"Server error"})
-    }
-}
-
-module.exports.deleteTask = async(req,res)=>{
-    try{
-        const {id} = req.params;
-        console.log("id =",id)
-        //const task = await Task.query('Delete from public."Tasks" Where id = $1',[id]);
-        const task =await Task.destroy({
-            where: {
-              id: id
+            res.status(201).json({ user });
             }
-          })
-        if(task){
-            return res.status(201).json({message:"Deleted successfully"})
+            return res.status(404).json({message:"Enter an valid 10 digit number"})
         }
-        return res.status(400).json({message:"no tasks found with that id"})
+        return res.status(404).json({message:"Enter an valid email address"})
+        
     }catch(error){
-        return res.status(500).json({message:"Server error"});
+        console.log("Error = ",error)
+        return res.status(500).json({ error: "Server error" });
     }
 }
 
-module.exports.getAllTasks = async(req,res)=>{
+module.exports.Login = async(req,res)=>{
     try{
-        const task = await Task.findAll();
-        if(task){
-            return res.status(201).json({task})
+        const {email,password} = req.body;
+        const user = await sequelize.query(`Select * from public."User" where email = :email`,{
+        
+            replacements:{email},
+            type:sequelize.QueryTypes.SELECT, 
+        });
+        //console.log("user = ",user)
+        if(user.length===0){
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
-        return res.status(404).json({message:"No tasks"})
+        const storedPassword = user[0].password
+        const validPassword = await bcrypt.compare(password,storedPassword);
+        if(!validPassword){
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+        res.status(200).json({ message: 'Login successful' });
     }catch(error){
-        return res.status(500).json({message:"Server Error"})
+        console.log("Error = ",error)
+        return res.status(500).json({ error: "Server error" });
     }
 }
-
-
