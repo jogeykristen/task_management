@@ -1,5 +1,7 @@
 const sequelize = require('../config/database');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 
 
 module.exports.createUser = async(req,res)=>{
@@ -49,7 +51,7 @@ module.exports.Login = async(req,res)=>{
             replacements:{email},
             type:sequelize.QueryTypes.SELECT, 
         });
-        //console.log("user = ",user)
+        console.log("user value= ",user[0].role)
         if(user.length===0){
             return res.status(401).json({ error: 'Invalid email or password' });
         }
@@ -58,9 +60,12 @@ module.exports.Login = async(req,res)=>{
         if(!validPassword){
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        res.status(200).json({ message: 'Login successful' });
+        // Generate a JWT token
+        const token = jwt.sign({ id: user[0].id,roles: user[0].role }, 'token', { expiresIn: '1h' });
+        res.status(200).json({  token });
     }catch(error){
         console.log("Error = ",error)
         return res.status(500).json({ error: "Server error" });
     }
 }
+
