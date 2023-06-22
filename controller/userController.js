@@ -62,6 +62,10 @@ module.exports.Login = async(req,res)=>{
         }
         // Generate a JWT token
         const token = jwt.sign({ id: user[0].id,roles: user[0].role }, 'token', { expiresIn: '1h' });
+        req.session.user = {
+            id: user[0].id,
+            roles: user[0].role
+          };
         res.status(200).json({  token });
     }catch(error){
         console.log("Error = ",error)

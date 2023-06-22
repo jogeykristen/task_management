@@ -8,6 +8,14 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+const session = require('express-session');
+
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: false
+}));
+
 // Routes
 app.use('/tasks', taskRoutes);
 app.use('/users', userRoute);
